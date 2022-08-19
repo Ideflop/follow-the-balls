@@ -33,22 +33,21 @@ async fn main() {
     let mut balls = Vec::new();
     let mut tar = true;
     
-    for i in 0..10 (
+    for i in 0..10 {
         if 0<= i && i <= 2 {
             tar = true;
         } else {
             tar = false;
-        },
+        };
 
-        balls.push(Ball::new(vec3( screen_width() *( i * 0.1f32), 20f32,15f32), tar))
-    )
-    {     
+        balls.push(Ball::new(vec3( screen_width() *( i as f32 * 0.1f32), 20f32,15f32), tar))
+    }
+        
     loop {
         for ball in balls.iter() {
             ball.draw();
         }
 
         next_frame().await
-    }
     }
 }
