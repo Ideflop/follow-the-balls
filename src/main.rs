@@ -1,8 +1,8 @@
 use macroquad::prelude::*;
 
-const BALL_SPEED: f32 = 200f32;
-const BALL_SIZE: f32 = 15f32;
-const BALL_START_POSITION: f32 = 200f32;
+const BALL_SPEED: f32 = 125f32;
+const BALL_SIZE: f32 = 20f32;
+const BALL_START_POSITION: f32 = 30f32;
 
 #[derive(Clone)]
 pub struct Ball {
@@ -52,39 +52,109 @@ impl Ball {
     }
 }
 
-pub fn collision(a: &mut Ball, b: &Ball){
+pub fn collision(a: &mut Ball, b: &Ball){ // change a.circle. to improve ?
     if a.circle.overlaps(&b.circle) {
-        let random = rand::rand();
-        let random_choice = random&3; 
-        match random_choice {
-            0 => {
-                a.vel.y = 1f32;
-            }
-            1 => {
-                a.vel.x = 1f32;
-                if a.regular {
-                    println!("{}", a.circle.y)
+        let x_distance =  a.circle.x - b.circle.x;
+        let y_distance = a.circle.y - b.circle.y;
+        let random = rand::gen_range(1, 3);
+
+        if x_distance > 0.0 {
+            if y_distance > 0.0{
+                match random {
+                    1 => {
+                        a.vel.x = -1f32;
+                        // circle
+                    }
+                    2 => {
+                        a.vel.y = -1f32;
+                        // cercle
+                    }
+                    _ => (),
                 }
             }
-            _ => {
-                a.vel.x = -1f32;
+            if y_distance == 0.0{
                 a.vel.y = -1f32;
+                // circle
+            }
+            if y_distance < 0.0{
+                match random {
+                    1 => {
+                        a.vel.y = -1f32;
+                        // circle
+                    }
+                    2 => {
+                        a.vel.x = 1f32 
+                        // circle
+                    }
+                    _ => (),
+                }
+            }
+        }
+
+        if x_distance == 0.0 {
+            if y_distance > 0.0{
+                a.vel.x = -1f32;
+                // circle
+            }
+            if y_distance == 0.0{
+            }
+            if y_distance < 0.0{
+                a.vel.x = 1f32;
+                // circle
+            }
+        }
+
+        if x_distance < 0.0 {
+            if y_distance > 0.0{
+                match random {
+                    1 => {
+                        a.vel.x = -1f32;
+                        //a.circle.x -= 20f32;
+                    }
+                    2 => {
+                        a.vel.y = 1f32 
+                        //a.circle.y -= 20f32;
+                    }
+                    _ => (),
+                }
+            }
+            if y_distance == 0.0{
+                a.vel.y = -1f32;
+                // circle
+            }
+            if y_distance < 0.0{
+                match random {
+                    1 => {
+                        a.vel.x = 1f32;
+                        // circle
+                    }
+                    2 => {
+                        a.vel.y = 1f32 
+                        // circle
+                    }
+                    _ => (),
+                }
             }
         }
     }
 }
 
+pub fn round(x: f32, decimals: u32) -> f32 {
+    let y = 10i32.pow(decimals) as f32;
+    (x * y).round() / y
+}
+
+
 #[macroquad::main("BasicShapes")]
 async fn main() {
     let mut balls = Vec::new();
     
-    for i in 0..10 {
+    for i in 0..15 {
         let tar = i == 0;
         // let tar = matches!(i, 0..=2); // if 0<=i<=2 then true else false
-        balls.push(Ball::new(vec3( screen_width() *( (i as f32 +0.5) * 0.1f32), BALL_START_POSITION, BALL_SIZE), tar));
+        balls.push(Ball::new(vec3( screen_width() *( (i as f32 +0.5) * 0.07f32), BALL_START_POSITION, BALL_SIZE), tar));
     }
 
-    let colli = &balls.clone();
         
     loop {
         // clear_background(WHITE);
@@ -92,26 +162,23 @@ async fn main() {
         for ball in balls.iter() {
             ball.draw();
         }
-        for coll in colli.iter() {
-            coll.draw();
-        }
         for ball in balls.iter_mut() {
             ball.update(get_frame_time());
         }
 
+        let colli = &balls.clone();
+        
         for  ball in balls.iter_mut() {
             for coll in colli.iter() {
                 let one = ball.circle.point();
                 let two = coll.circle.point();
 
-                if (one.x == two.x) && (one.y == two.y){
-                   (); 
-                } else { 
+                if !(one.x == two.x) && !(one.y == two.y){
                     collision( ball, coll);
                 }
             }
         }
-
+        
         next_frame().await
     }
 }
