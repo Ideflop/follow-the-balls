@@ -15,6 +15,7 @@ pub enum GameState {
    Menu,
    Game,
    Guess,
+   Answer,
    Result,
 }
 
@@ -148,13 +149,14 @@ async fn main() {
     let mut balls = Vec::new();
     let mut balls_menu = Vec::new();
     let mut count = 0;
-    let mut time_game_start = 0f64;
+    let mut time_game = 0f64;
     let mut game_state = GameState::Menu;
     let mut lives = 3;
     let mut ball_found_score = 0;
     let mut ball_found = Vec::new();
     let mut ball_choosen = Vec::new();
     let mut win_or_loose = String::new();
+    let mut balls_result = Vec::new();
     
     for i in 0..10 {
         balls_menu.push(Ball::new(vec3( screen_width() *( (i as f32 +0.5) * 0.1f32), BALL_START_POSITION_MENU, BALL_SIZE_MENU), true));
@@ -185,7 +187,7 @@ async fn main() {
 
                 if is_key_down(KeyCode::Space) && count != 0{
                     game_state = GameState::Game;
-                    time_game_start = get_time();
+                    time_game = get_time();
 
                     let mut rng = thread_rng(); // rand
                     ball_choosen = sample(&mut rng, 14, count).into_vec(); // rand
@@ -201,7 +203,7 @@ async fn main() {
             }
             GameState::Game => {
                 for ball in balls.iter() {
-                    if get_time() - time_game_start < TIME_NO_BLUE {
+                    if get_time() - time_game < TIME_NO_BLUE {
                         ball.draw(true);
                     } else {
                         ball.draw(false);
@@ -219,7 +221,7 @@ async fn main() {
                     }
                 }
 
-                if get_time() - time_game_start > TIME_TO_GUESS {
+                if get_time() - time_game > TIME_TO_GUESS {
                     game_state = GameState::Guess;
                 }
             }
@@ -252,26 +254,52 @@ async fn main() {
                 }
 
                 if lives == 0 {
-                    game_state = GameState::Result;
+                    game_state = GameState::Answer;
                     win_or_loose = "loose".to_string();
+                    time_game = get_time();
                 }
                 if ball_found_score == count {
-                    game_state = GameState::Result;
+                    game_state = GameState::Answer;
                     win_or_loose = "win".to_string();
+                    time_game = get_time();
                 }
 
             }
+            GameState::Answer => {
+                let ctime = get_time() - time_game;
+                if win_or_loose == "loose" {
+                    if ctime < 2f64 {
+                        for ball in balls.iter() {
+                           ball.draw(true);
+                        }
+                    } else {
+                        game_state = GameState::Result;
+                    }
+                }
+                if win_or_loose == "win" {
+                    if ctime < 1.5f64 {
+                        for ball in balls.iter() {
+                           ball.draw(true);
+                        }
+                    } else {
+                        game_state = GameState::Result;
+                    }
+                }
+            }
             GameState::Result => {
 
-                let mut balls_result = Vec::new();
-                let mut rng = thread_rng(); // rand
-                let result = sample(&mut rng, 19, 5).into_vec(); // rand
-                for i in 0..10 {
-                    if result.iter().any(|&l| l==i){
-                        balls_result.push(Ball::new(vec3( screen_width() *( (i as f32 +0.5) * 0.1f32), BALL_START_POSITION_MENU, BALL_SIZE_MENU), true));
-                    } else {
-                        balls_result.push(Ball::new(vec3( screen_width() *( (i as f32 +0.5) * 0.1f32), BALL_START_POSITION_MENU, BALL_SIZE_MENU), false));
+                let time = get_time();
+                if time - time_game  > 0.3f64 {
+                    let mut rng = thread_rng(); // rand
+                    let result = sample(&mut rng, 10, 4).into_vec(); // rand
+                    for i in 0..10 {
+                        if result.iter().any(|&l| l==i){
+                            balls_result.push(Ball::new(vec3( screen_width() *( (i as f32 +0.5) * 0.1f32), BALL_START_POSITION_MENU, BALL_SIZE_MENU), true));
+                        } else {
+                            balls_result.push(Ball::new(vec3( screen_width() *( (i as f32 +0.5) * 0.1f32), BALL_START_POSITION_MENU, BALL_SIZE_MENU), false));
+                        }
                     }
+                    time_game += 0.6f64;
                 }
 
                 for ball in balls_result.iter() {
@@ -287,7 +315,7 @@ async fn main() {
                     balls = Vec::new();
                     balls_menu = Vec::new();
                     count = 0;
-                    time_game_start = 0f64;
+                    time_game = 0f64;
                     lives = 3;
                     ball_found_score = 0;
                     ball_found = Vec::new();
@@ -393,7 +421,7 @@ async fn main() {
                         );
                 let title  = "Press SPACE to play again or Q to quit".to_string();
                 draw_text_ex(&title,
-                             150.0,
+                             175.0,
                              225.0,
                              TextParams { 
                                  font, 
@@ -404,6 +432,7 @@ async fn main() {
                         );
             }
             GameState::Game => {}
+            GameState::Answer => {}
         }
         
         next_frame().await
