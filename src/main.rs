@@ -431,6 +431,7 @@ async fn main() {
                             }
                         );
             }
+
             GameState::Game => {}
             GameState::Answer => {}
         }
